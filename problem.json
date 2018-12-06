@@ -1,0 +1,11 @@
+{
+	"variables" : 
+		[
+			{
+				"name" : "1",
+	"constraints" :
+		{
+			"vars" : ["a", "b"],
+			"rule" : "a + b == 0"
+		}
+}
