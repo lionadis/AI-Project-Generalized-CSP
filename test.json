@@ -1,0 +1,1 @@
+{"domains": {"A": [1, 2], "B": [1, 2]}, "constraints": [{"scope": ["A", "B"], "rule": "x + y == 2"}, {"scope": ["B", "A"], "rule": "x + y == 2"}]}

@@ -22,7 +22,7 @@ class CSP:
 	
 		# Choosing heuristics
 		self.ac3 = ac3
-		self.heuristic = heuristic
+		self.heuristic = heuristic.lower()
 		self.lcs = lcs
 
 		self.all_solutions = all_solutions
@@ -35,11 +35,14 @@ class CSP:
 		self.domains[var] = domain
 	
 	def add_constraint(self, x, y, rule):
+
 		try:
 			self.neighbors[x][y] = Constraint(rule)
 		except:
 			self.neighbors[x] = dict()
 			self.neighbors[x][y] = Constraint(rule)
+
+			self.neighbors[y] = dict()
 
 	def is_complete(self):
 		return all([len(self.domains[X]) == 1 for X in self.variables])
@@ -125,7 +128,7 @@ class CSP:
 
 		modified = False
 		for x in self.domains[X]:
-			if not any([self.neighbors[X][Y].f(x, y) and self.neighbors[Y][X].f(x, y) for y in self.domains[Y]]):
+			if not any([self.neighbors[X][Y].f(x, y) for y in self.domains[Y]]):
 				self.cleared_values += 1
 				self.domains[X].remove(x)
 				modified = True
@@ -183,6 +186,8 @@ class CSP:
 	def load_from_json(self, filename):
 
 		problem = json.load(open(filename, 'r'))
+	
+		self.__init__()
 
 		for var, domain in problem['domains'].items():
 			self.add_variable(var, domain)
