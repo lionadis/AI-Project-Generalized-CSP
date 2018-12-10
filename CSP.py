@@ -13,7 +13,7 @@ class Constraint():
 
 class CSP: 
 
-	def __init__(self, ac3=True, heuristic="mrv", lcs=True, all_solutions = True):
+	def __init__(self, algorithm="ac3", heuristic="mrv", value_ordering="lcs", all_solutions = True, log_file="trace.log"):
 
 		# Defining CSP
 		self.variables = []
@@ -21,14 +21,18 @@ class CSP:
 		self.neighbors = dict()
 	
 		# Choosing heuristics
-		self.ac3 = ac3
+		self.algorithm = algorithm.lower()
 		self.heuristic = heuristic.lower()
-		self.lcs = lcs
+		self.value_ordering = value_ordering.lower()
 
 		self.all_solutions = all_solutions
 		self.solutions = []
 		self.calls = 0
 		self.cleared_values = 0
+
+		# Log
+		self.log_file = log_file
+		self.log = open(log_file, "w")
 
 	def add_variable(self, var, domain):
 		self.variables.append(var)
@@ -51,9 +55,9 @@ class CSP:
 		
 		for Y, rule in self.neighbors[X].items():
 			if len(self.domains[Y]) == 1 and not rule.f(x, self.domains[Y][0]):
-				print("Error assiging %s to %s since %s is assigned to %s"%(X, x, Y, self.domains[Y][0]))
+				self.log.write("Error assiging %s to %s since %s is assigned to %s\n"%(X, x, Y, self.domains[Y][0]))
 				return False
-		print("Assiging %s to %s"%(X, x))
+		self.log.write("Assiging %s to %s\n"%(X, x))
 		return True
 
 	def get_unassigned_variables(self, X = None):
@@ -105,7 +109,7 @@ class CSP:
 	
 		return sorted(self.domains[X], key = cmp_to_key(compare))
 
-	def AC3(self, X = None):
+	def ac3(self, X = None):
 		
 		if X is None:
 			Q = [(x, y) for x in self.variables for y in self.neighbors[x]]
@@ -120,24 +124,37 @@ class CSP:
 				for Z in self.neighbors[X]:
 					if Z != Y:
 						Q.append((Z, X))
-		print("Values cleared by AC3 %s"%(self.cleared_values))
+		self.log.write("Values cleared by AC3 : %s\n"%(self.cleared_values))
+		self.cleared_values = 0
+		return True
+
+	def forward_checking(self, X):
+		
+		for Y in self.neighbors[X]:
+			self.clear_inconsistent_values(Y, X)
+			if len(self.domains[Y]) == 0:
+				return False
+		self.log.write("Values cleared by Forward Checking :%s \n"%(self.cleared_values))
 		self.cleared_values = 0
 		return True
 
 	def clear_inconsistent_values(self, X, Y):
 
 		modified = False
-		for x in self.domains[X]:
-			if not any([self.neighbors[X][Y].f(x, y) for y in self.domains[Y]]):
-				self.cleared_values += 1
-				self.domains[X].remove(x)
-				modified = True
-		return modified
+		try:
+			for x in self.domains[X]:
+				if not any([self.neighbors[X][Y].f(x, y) for y in self.domains[Y]]):
+					self.cleared_values += 1
+					self.domains[X].remove(x)
+					modified = True
+			return modified
+		except:
+		   return False
 	
 
 	def get_domain_ordering(self, X):
 
-		if self.lcs == True:
+		if self.value_ordering == "lcs":
 			return self.order_by_least_constraining_value(X)
 		else:
 			return self.domains[X]
@@ -148,7 +165,6 @@ class CSP:
 
 		if self.is_complete():
 			self.solutions.append(self.domains)
-			print(self.domains)
 			if not self.all_solutions:
 				return True
 			else:
@@ -159,10 +175,13 @@ class CSP:
 			if self.check_consistency(X, x):
 				current_domains = deepcopy(self.domains)
 				self.domains[X] = [x]
-				mac = False
-				if self.ac3 == True:
-					mac = self.AC3(X)
-				if mac or self.ac3 == False:
+				ac3 = False
+				fc = False
+				if self.algorithm == "ac3":
+					ac3 = self.ac3(X)
+				elif self.algorithm == "fc":
+					fc = self.forward_checking(X)
+				if ac3 or fc or self.algorithm == "bt":
 					result = self.backtrack_search()
 				if result != None:
 					return result
@@ -173,7 +192,7 @@ class CSP:
 	def solve(self):
 
 		if self.ac3:
-			self.AC3()
+			self.ac3()
 		self.backtrack_search()
 		if self.all_solutions:
 			return self.solutions
@@ -183,11 +202,20 @@ class CSP:
 			else :
 				return 0
 
+	def save_solution(self, filename="solutions.json"):
+		
+		if self.is_complete():
+			f = open(filename, "w")
+			f.write(json.dumps(self.domains))
+			print("Solution saved successfully")
+		else:
+			print("CSP is not solved yet !")
+
 	def load_from_json(self, filename):
 
 		problem = json.load(open(filename, 'r'))
 	
-		self.__init__()
+		self.__init__(self.algorithm,self.heuristic, self.value_ordering, self.all_solutions, self.log_file)
 
 		for var, domain in problem['domains'].items():
 			self.add_variable(var, domain)

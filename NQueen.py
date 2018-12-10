@@ -2,20 +2,21 @@ from CSP import CSP
 
 def initialzing_NQueen(N):
 
-	csp = CSP()
+	csp = CSP(all_solutions=False)
 	
 	rule = "x[0] != y[0] and x[1] != y[1] and abs((x[0] - y[0]) / (x[1] - y[1])) != 1"
 
 	for v in range(N):
-		csp.add_variable(v, [[x, y] for x in range(N) for y in range(N)])
+		csp.add_variable(str(v), [[x, y] for x in range(N) for y in range(N)])
 
 	for x in csp.variables:
 		for y in csp.variables:
 			if x != y:
 				csp.add_constraint(x, y, rule)
+	print(csp.domains)
 	return csp
 
-N = 4
+N = 5 
 
 def print_solution(assignment):
 
@@ -35,16 +36,8 @@ def print_solution(assignment):
 
 def main():
 
-#	nqueen = initialzing_NQueen(N)
-#	print(nqueen.neighbors)
-	nqueen = CSP()
-	nqueen.load_from_json("nqueen.json")
-	print(nqueen.neighbors)
-	for solution in nqueen.solve():
-		print_solution(solution)
-		print()
-	print(nqueen.calls)
-#	nqueen.export_to_json("nqueen.json")
+	nqueen = initialzing_NQueen(N)
+	nqueen.export_to_json("nqueen.json")
 if __name__ == "__main__":
 	main()
 
