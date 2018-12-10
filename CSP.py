@@ -4,22 +4,23 @@ from functools import cmp_to_key
 from inspect import getsourcelines
 import json
 
+
 class Constraint():
 
 	def __init__(self, rule):
 		self.rule = rule
-		self.f = lambda x, y : eval(rule)
+		self.f = lambda x, y: eval(rule)
 
 
-class CSP: 
+class CSP:
 
-	def __init__(self, algorithm="ac3", heuristic="mrv", value_ordering="lcs", all_solutions = True, log_file="trace.log"):
+	def __init__(self, algorithm="ac3", heuristic="mrv", value_ordering="lcs", all_solutions=True, log_file="trace.log"):
 
 		# Defining CSP
 		self.variables = []
 		self.domains = dict()
 		self.neighbors = dict()
-	
+
 		# Choosing heuristics
 		self.algorithm = algorithm.lower()
 		self.heuristic = heuristic.lower()
@@ -34,10 +35,13 @@ class CSP:
 		self.log_file = log_file
 		self.log = open(log_file, "w")
 
+		# Solved
+		self.solved = False
+
 	def add_variable(self, var, domain):
 		self.variables.append(var)
 		self.domains[var] = domain
-	
+
 	def add_constraint(self, x, y, rule):
 
 		try:
@@ -50,6 +54,9 @@ class CSP:
 
 	def is_complete(self):
 		return all([len(self.domains[X]) == 1 for X in self.variables])
+
+	def is_solved(self):
+		return self.solved
 
 	def check_consistency(self, X, x):
 		
@@ -194,19 +201,21 @@ class CSP:
 		if self.ac3:
 			self.ac3()
 		self.backtrack_search()
+		self.solved = True
 		if self.all_solutions:
 			return self.solutions
 		else:
 			if len(self.solutions) >= 1:
-				return self.solutions[0]
+				return self.solutions
 			else :
 				return 0
 
 	def save_solution(self, filename="solutions.json"):
 		
-		if self.is_complete():
+		self.solved = True
+		if self.is_solved():
 			f = open(filename, "w")
-			f.write(json.dumps(self.domains))
+			f.write(json.dumps(self.solutions))
 			print("Solution saved successfully")
 		else:
 			print("CSP is not solved yet !")
@@ -237,4 +246,4 @@ class CSP:
 				problem["constraints"].append(constraint)
 		json_file = open(filename, "w")
 		json_file.write(json.dumps(problem))
-	
+

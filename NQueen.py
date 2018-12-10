@@ -2,7 +2,7 @@ from CSP import CSP
 
 def initialzing_NQueen(N):
 
-	csp = CSP(all_solutions=False)
+	csp = CSP()
 	
 	rule = "x[0] != y[0] and x[1] != y[1] and abs((x[0] - y[0]) / (x[1] - y[1])) != 1"
 
@@ -13,7 +13,9 @@ def initialzing_NQueen(N):
 		for y in csp.variables:
 			if x != y:
 				csp.add_constraint(x, y, rule)
-	print(csp.domains)
+	csp.solve()
+	csp.save_solution()
+#	print(csp.solutions)
 	return csp
 
 N = 5 

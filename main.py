@@ -19,20 +19,20 @@ def export_to_json():
 def generate_single():
 
 	csp.all_solutions = False
-	if csp.is_complete():
+	if csp.is_solved():
 		print("CSP already solved")
 	else:
-		csp.backtrack_search()
+		csp.solve()
 		print("SOLVED !!")
 	input()
 
 def generate_all():
 
-	csp.solutions = True
-	if csp.is_complete():
+	csp.all_solutions = True
+	if csp.is_solved():
 		print("CSP already solved")
 	else:
-		csp.backtrack_search()
+		csp.solve()
 		print("SOLVED !!")
 	input()
 
